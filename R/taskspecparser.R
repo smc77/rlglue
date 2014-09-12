@@ -31,6 +31,17 @@ assign("rlglue.tsp", list(w=c("VERSION","PROBLEMTYPE","DISCOUNTFACTOR", "OBSERVA
             valid = TRUE,
             last_error = ""), envir=.GlobalEnv)
 
+
+TaskSpec <- R6Class("TaskSpec",
+                   public = list(
+                     w = c("VERSION","PROBLEMTYPE","DISCOUNTFACTOR", "OBSERVATIONS","ACTIONS","REWARDS","EXTRA"), 
+                     v=c("INTS","DOUBLES","CHARCOUNT"), 
+                     expected_version = "RL-Glue-3.0",
+                     valid = TRUE,
+                     last_error = "")
+)
+                     
+
 rlglue.tsp <- list(w=c("VERSION","PROBLEMTYPE","DISCOUNTFACTOR", "OBSERVATIONS","ACTIONS","REWARDS","EXTRA"),
      v=c("INTS","DOUBLES","CHARCOUNT"), 
      expected_version = "RL-Glue-3.0",

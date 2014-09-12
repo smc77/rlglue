@@ -64,7 +64,6 @@ Network <- R6Class("Network",
                           sock = NA, 
                           recvBuffer = '',
                           sendBuffer = '', 
-                          getAbstractType = NA,
                           connect = function(host=kLocalHost, port=kDefaultPort, retryTimeout=kRetryTimeout) {
                            print(paste("Trying to connect to server."))
                            while(is.na(self$sock)) {
@@ -78,7 +77,7 @@ Network <- R6Class("Network",
                              print("Connection successful.")
                            }
                          },
-                         close = function() {
+                         disconnect = function() {
                            try({
                              if(!is.na(self$sock) && isOpen(self$sock)) {
                                 close(self$sock)
@@ -98,78 +97,33 @@ Network <- R6Class("Network",
                              self$recvBuffer <- paste(recvBuffer, x, sep='')
                            }
                            return(nchar(self$recvBuffer))
-                         }
+                         },
+                         clearSendBuffer = function() self$sendBuffer = '',
+                         clearRecvBuffer = function() self$recvBuffer = '',
+                         getInt = function() as.integer(self$recvBuffer),
+                         getDouble = function() as.double(self$recvBuffer),
+                         getChar = function() as.character(self$recvBuffer),
+                         getAbstractType = function() {
+                           at <- list()
+                           at$intArray = getInt()
+                           at$doubleArray = getDouble()
+                           at$charArray = getChar()
+                           return(at)
+                         },
+                         putInt = function(value) self$sendBuffer = paste(self$sendBuffer, value),
+                         putDouble = function(value) self$sendBuffer = paste(self$sendBuffer, value),
+                         putChar = function(value) self$sendBuffer = paste(self$sendBuffer, value)
                        )
 )
 
 
 
-# def clearSendBuffer(self):
-#   self.sendBuffer.close()
-# self.sendBuffer = StringIO.StringIO()
-# 
-# def clearRecvBuffer(self):
-#   self.recvBuffer.close()
-# self.recvBuffer = StringIO.StringIO()
-# 
 # def flipSendBuffer(self):
 #   self.clearSendBuffer()
 # 
 # def flipRecvBuffer(self):
 #   self.clearRecvBuffer()
 # 
-# def getInt(self):
-#   s = self.recvBuffer.read(kIntSize)
-# return struct.unpack("!i",s)[0]
-# 
-# def getDouble(self):
-#   s = self.recvBuffer.read(kDoubleSize)
-# return struct.unpack("!d",s)[0]
-# 
-# def getString(self):
-#   #If you read 0 you get "" not None so that's fine
-#   length = self.getInt()
-# return self.recvBuffer.read(length)
-# 
-# 
-# def getAbstractType_list(self):
-#   numInts = self.getInt()
-# numDoubles = self.getInt()		
-# numChars = self.getInt()		
-# returnStruct=RL_Abstract_Type()
-# 
-# if numInts > 0:
-#   s = self.recvBuffer.read(numInts*kIntSize)
-# returnStruct.intArray = list(struct.unpack("!%di" % (numInts),s))
-# if numDoubles > 0:
-#   s = self.recvBuffer.read(numDoubles*kDoubleSize)
-# returnStruct.doubleArray = list(struct.unpack("!%dd" % (numDoubles),s))
-# if numChars > 0:
-#   s = self.recvBuffer.read(numChars*kCharSize)
-# returnStruct.charArray = list(struct.unpack("!%dc" % (numChars),s))
-# return returnStruct
-# 
-# def getAbstractType_numpy(self):
-#   numInts = self.getInt()
-# numDoubles = self.getInt()		
-# numChars = self.getInt()		
-# returnStruct=RL_Abstract_Type()
-# 
-# if numInts > 0:
-#   s = self.recvBuffer.read(numInts*kIntSize)
-# assert kIntSize == 4
-# returnStruct.intArray = numpy.frombuffer(s,
-#                                          dtype=numpy_int_type,
-#                                          count=numInts)
-# if numDoubles > 0:
-#   s = self.recvBuffer.read(numDoubles*kDoubleSize)
-# returnStruct.doubleArray = numpy.frombuffer(s, count=numDoubles,
-#                                             dtype=numpy_float_type)
-# if numChars > 0:
-#   s = self.recvBuffer.read(numChars*kCharSize)
-# returnStruct.charArray = numpy.frombuffer(s, count=numChars,
-#                                           dtype=numpy_char_type)
-# return returnStruct
 # 
 # def getObservation(self):
 #   return Observation.fromAbstractType(self.getAbstractType())
@@ -177,17 +131,6 @@ Network <- R6Class("Network",
 # def getAction(self):
 #   return Action.fromAbstractType(self.getAbstractType())
 # 
-# def putInt(self,value):
-#   self.sendBuffer.write(struct.pack("!i",value))
-# 
-# def putDouble(self,value):
-#   self.sendBuffer.write(struct.pack("!d",value))
-# 
-# def putString(self,value):
-#   if value == None:
-#   value = ''
-# self.putInt(len(value))
-# self.sendBuffer.write(value)
 # 
 # def putObservation(self,obs):
 #   self.putAbstractType(obs)

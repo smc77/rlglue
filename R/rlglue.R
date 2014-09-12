@@ -1,94 +1,72 @@
-# # 
-# # Copyright (C) 2007, Mark Lee
-# # 
-# #http://rl-glue-ext.googlecode.com/
-# #
-# # Licensed under the Apache License, Version 2.0 (the "License");
-# # you may not use this file except in compliance with the License.
-# # You may obtain a copy of the License at
-# #
-# #     http://www.apache.org/licenses/LICENSE-2.0
-# #
-# # Unless required by applicable law or agreed to in writing, software
-# # distributed under the License is distributed on an "AS IS" BASIS,
-# # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# # See the License for the specific language governing permissions and
-# # limitations under the License.
-# #
-# #
-# #  $Revision: 473 $
-# #  $Date: 2009-01-29 20:50:12 -0700 (Thu, 29 Jan 2009) $
-# #  $Author: brian@tannerpages.com $
-# #  $HeadURL: http://rl-glue-ext.googlecode.com/svn/trunk/projects/codecs/Python/src/rlglue/RLGlue.py $
 # 
-# import sys
-# import os
-# import rlglue.network.Network as Network
-# from rlglue.types import Observation_action
-# from rlglue.types import Reward_observation_action_terminal
+# Copyright (C) 2014, Shane Conway
 # 
-# 
-# from rlglue.versions import get_svn_codec_version
-# from rlglue.versions import get_codec_version
-# 
-# network = None
-# 
-# # () -> void
-# def forceConnection():
-#   global network
-# if network == None:
-#   
-#   theSVNVersion=get_svn_codec_version()
-# theCodecVersion=get_codec_version()
-# 
-# host = Network.kLocalHost
-# port = Network.kDefaultPort
-# 
-# hostString = os.getenv("RLGLUE_HOST")
-# portString = os.getenv("RLGLUE_PORT")
-# 
-# if (hostString != None):
-#   host = hostString
-# 
-# try:
-#   port = int(portString)
-# except TypeError:
-#   port = Network.kDefaultPort
-# 
-# print "RL-Glue Python Experiment Codec Version: "+theCodecVersion+" (Build "+theSVNVersion+")"
-# print "\tConnecting to " + host + " on port " + str(port) + "..."
-# sys.stdout.flush()
-# 
-# 
-# network = Network.Network()
-# network.connect(host,port)
-# network.clearSendBuffer()
-# network.putInt(Network.kExperimentConnection)
-# network.putInt(0)
-# network.send()
-# 
-# # (int) -> void
-# def doStandardRecv(state):
-#   network.clearRecvBuffer()
-# recvSize = network.recv(8) - 8
-# 
-# glueState = network.getInt()
-# dataSize = network.getInt()
-# remaining = dataSize - recvSize
-# 
-# if remaining < 0:
-#   remaining = 0
-# 
-# remainingReceived = network.recv(remaining)
-# 
-# # Already read the header, so discard it
-# network.getInt()
-# network.getInt()
-# 
-# if (glueState != state):
-#   sys.stderr.write("Not synched with server. glueState = " + str(glueState) + " but should be " + str(state) + "\n")
-# sys.exit(1)
-# 
+# Based on similar codecs, primarily written by Brian Tanner, and the Python extension mostly written by Mark Lee:
+# http://rl-glue-ext.googlecode.com/
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+
+force_connection <- function() {
+  if(is.na(rlglue.network)) {
+    
+    theCodecVersion = packageVersion("rlglue")
+    
+    host = kLocalHost
+    port = kDefaultPort
+    
+    #
+    hostString = Sys.getenv("RLGLUE_HOST")
+    portString = Sys.getenv("RLGLUE_PORT")
+    
+    print(paste("RL-Glue R Experiment Codec Version:", theCodecVersion, "."))
+    print(paste("\tConnecting to ", host, " on port ", port, "...", sep=""))
+    
+    rlglue.network <<- Network$new()
+    rlglue.network$connect(host, port)
+    rlglue.network$clearSendBuffer()
+    rlglue.network$putInt(kExperimentConnection)
+    rlglue.network$putInt(0)
+    rlglue.network$send()
+  }
+}
+
+doStandardRecv <- function(state) {
+  rlglue.network$clearRecvBuffer()
+  recvSize = rlglue.network$recv(8) - 8
+  
+  glueState = rlglue.network$getInt()
+  dataSize = rlglue.network$getInt()
+  remaining = dataSize - recvSize
+  
+  if(remaining < 0) remaining = 0
+  
+  remainingReceived = rlglue.network$recv(remaining)
+  
+  # Already read the header, so discard it
+  rlglue.network$getInt()
+  rlglue.network$getInt()
+  
+  if (glueState != state) {
+    stop(paste("Not synched with server. glueState = ", str(glueState), " but should be ", state, "\n"), sep="")
+  }
+  
+}
+
+doCallWithNoParams <- function(state) {
+  
+}
+
 # # (int) -> void
 # def doCallWithNoParams(state):
 #   network.clearSendBuffer()
