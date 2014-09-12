@@ -56,89 +56,54 @@ kDefaultBufferSize = 4096
 kIntSize = 4
 kDoubleSize = 8
 kCharSize = 1
-# 
-# list(sock = "connection",
-#      recvBuffer="character", 
-#      sendBuffer="character", 
-#      getAbstractType="list")
+
 kUnknownMessage = "Unknown Message: %s\n"
 
-Network <- setRefClass("Network",
-                       fields = c("sock", "recvBuffer", "sendBuffer", "getAbstractType"),
-                       methods = list(
-                         connect = function(host=kLocalHost, port=kDefaultPort, retryTimeout=kRetryTimeout) {
+Network <- R6Class("Network",
+                       public = list(
+                          sock = NA, 
+                          recvBuffer = '',
+                          sendBuffer = '', 
+                          getAbstractType = NA,
+                          connect = function(host=kLocalHost, port=kDefaultPort, retryTimeout=kRetryTimeout) {
                            print(paste("Trying to connect to server."))
-                           while(is.na(sock)) {
+                           while(is.na(self$sock)) {
                              (result <- try({
-                               sock <<- socketConnection(host=host, port=port)
+                               self$sock <- socketConnection(host=host, port=port)
                              }))
                              if(all(class(result) == "try-error")) {
-                               sock <<- NA
+                               self$sock <- NA
                                Sys.sleep(retryTimeout)
                              }
                              print("Connection successful.")
                            }
+                         },
+                         close = function() {
+                           try({
+                             if(!is.na(self$sock) && isOpen(self$sock)) {
+                                close(self$sock)
+                                self$sock <- NA
+                             }
+                           })
+                         },
+                         send = function() {
+                           if(is.na(self$sock) || !isOpen(self$sock)) self$connect()
+                           write(self$sendBuffer, self$sock)
+                         },
+                         recv = function(size) {
+                           s = ''
+                           if(is.na(self$sock) || !isOpen(self$sock)) self$connect()
+                           while(nchar(s) < size) {
+                             x <- readLines(self$sock)
+                             self$recvBuffer <- paste(recvBuffer, x, sep='')
+                           }
+                           return(nchar(self$recvBuffer))
                          }
                        )
 )
 
-network <- function() {
-  n <- list(sock=NA, recvBuffer='', sendBuffer='', getAbstractType='list')
-  class(n) <- "network"
-  return(n)
-}
 
-is.network <- function(n) class(n) == "network"
 
-net.connect <- function(network, host=kLocalHost, port=kDefaultPort, retryTimeout=kRetryTimeout) {
-  if(missing(network) || !is.network(network)) stop("Need to provide a valid network object.")
-  orig.name <- as.character(match.call()$network)
-  print(paste("Trying to connect to server for", orig.name, "."))
-  while(is.na(network$sock)) {
-    (result <- try({
-      network$sock = socketConnection(host=host, port=port)
-    }))
-    if(all(class(result) == "try-error")) {
-      network$sock <- NA
-      Sys.sleep(retryTimeout)
-    }
-    print("Connection successful.")
-    assign(orig.name, network, parent.frame(1))     
-  } 
-}
-
-net.close <- function(network) {
-  orig.name <- as.character(match.call()$network)
-  sock <- network$sock
-  if(isOpen(sock)) {
-    flush(sock)
-    close(sock)
-    network$sock <- NA
-    assign(orig.name, network, parent.frame(1))     
-  }
-}
-
-net.send <- function(network) {
-  orig.name <- as.character(match.call()$network)
-  if(!isOpen(network$sock)) net.connect(network)
-  write(network$sendBuffer, network$sock)
-  assign(orig.name, network, parent.frame(1))     
-}
-
-# def close(self):
-#   self.sock.close()
-# 
-# def send(self):
-#   self.sock.sendall(self.sendBuffer.getvalue())
-# 
-# def recv(self,size):
-#   s = ''
-# while len(s) < size:
-#   s += self.sock.recv(size - len(s))
-# self.recvBuffer.write(s)
-# self.recvBuffer.seek(0)
-# return len(s)
-# 
 # def clearSendBuffer(self):
 #   self.sendBuffer.close()
 # self.sendBuffer = StringIO.StringIO()
