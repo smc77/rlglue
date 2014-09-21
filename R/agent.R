@@ -24,7 +24,7 @@ Agent <- R6Class("Agent",
                    agent_step = function(reward=NA, observation=NA) return(),
                    agent_end = function(reward=NA) return(),
                    agent_cleanup = function() return(),
-                   agent_message = function(message=NA) return(),
+                   agent_message = function(message=NA) return()
                  ))
 
 loadAgent <- function(theAgent=NA) {

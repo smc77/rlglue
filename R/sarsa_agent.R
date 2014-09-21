@@ -52,12 +52,12 @@ SarsaAgent <- R6Class("SarsaAgent",
                  inherit=Agent,
                  public=list(
                    randGenerator = rnorm,
-                   lastAction = action(),
+                   lastAction = 'action()',
                    agent_start = function(observation=NA) return(),
                    agent_step = function(reward=NA, observation=NA) return(),
                    agent_end = function(reward=NA) return(),
                    agent_cleanup = function() return(),
-                   agent_message = function(message=NA) return(),
+                   agent_message = function(message=NA) return()
                  ))
 
 
