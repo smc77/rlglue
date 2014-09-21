@@ -17,67 +17,41 @@
 # limitations under the License.
 #
 
-# from rlglue.types import Action
-# from rlglue.types import Observation
-# 
-# class Agent:
-#   # (string) -> void
-#   def agent_init(taskSpecification):
-#   pass
-# 
-# # (Observation) -> Action
-# def agent_start(observation):
-#   pass
-# 
-# # (double, Observation) -> Action
-# def agent_step(reward, observation):
-#   pass
-# 
-# # (double) -> void
-# def agent_end(reward):
-#   pass
-# 
-# # () -> void
-# def agent_cleanup():
-#   pass
-# 
-# # (string) -> string
-# def agent_message(message):
-#   pass
+Agent <- R6Class("Agent",
+                 public=list(
+                   agent_init = function(taskSpecification=NA) return(),
+                   agent_start = function(observation=NA) return(),
+                   agent_step = function(reward=NA, observation=NA) return(),
+                   agent_end = function(reward=NA) return(),
+                   agent_cleanup = function() return(),
+                   agent_message = function(message=NA) return(),
+                 ))
 
-# 
-# import sys
-# import os
-# import rlglue.network.Network as Network
-# from ClientAgent import ClientAgent
-# 
-# from rlglue.versions import get_svn_codec_version
-# from rlglue.versions import get_codec_version
-# 
-# def loadAgent(theAgent):
-#   theSVNVersion=get_svn_codec_version()
-# theCodecVersion=get_codec_version()
-# client = ClientAgent(theAgent)
-# 
-# host = Network.kLocalHost
-# port = Network.kDefaultPort
-# 
-# hostString = os.getenv("RLGLUE_HOST")
-# portString = os.getenv("RLGLUE_PORT")
-# 
-# if (hostString != None):
-#   host = hostString
-# 
-# try:
-#   port = int(portString)
-# except TypeError:
-#   port = Network.kDefaultPort
-# 
-# 
-# print "RL-Glue Python Agent Codec Version: "+theCodecVersion+" (Build "+theSVNVersion+")"
-# print "\tConnecting to " + host + " on port " + str(port) + "..."
-# sys.stdout.flush()
-# 
+loadAgent <- function(theAgent=NA) {
+  if(is.na(theAgent)) stop("Need to specify an agent to load.")
+  if(is.na(rlglue.network)) {
+    theCodecVersion = packageVersion("rlglue")
+    
+    client = ClientAgent(theAgent)
+    
+    host = kLocalHost
+    port = kDefaultPort
+    
+    #
+    hostString = Sys.getenv("RLGLUE_HOST")
+    portString = Sys.getenv("RLGLUE_PORT")
+    
+    print(paste("RL-Glue R Agent Codec Version:", theCodecVersion, "."))
+    print(paste("Connecting to ", host, " on port ", port, "...", sep=""))
+    
+    # client.connect(host, port, Network.kRetryTimeout)
+    # print "\t Agent Codec Connected"
+    # client.runAgentEventLoop()
+    # client.close()
+    #assign("rlglue.network", rlglue.network, .GlobalEnv)
+  }
+}
+
 # client.connect(host, port, Network.kRetryTimeout)
 # print "\t Agent Codec Connected"
 # client.runAgentEventLoop()

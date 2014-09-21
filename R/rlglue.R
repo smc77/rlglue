@@ -17,7 +17,7 @@
 # limitations under the License.
 #
 
-force_connection <- function() {
+forceConnection <- function() {
   if(is.na(rlglue.network)) {
     
     theCodecVersion = packageVersion("rlglue")
@@ -30,7 +30,7 @@ force_connection <- function() {
     portString = Sys.getenv("RLGLUE_PORT")
     
     print(paste("RL-Glue R Experiment Codec Version:", theCodecVersion, "."))
-    print(paste("\tConnecting to ", host, " on port ", port, "...", sep=""))
+    print(paste("Connecting to ", host, " on port ", port, "...", sep=""))
     
     rlglue.network <<- Network$new()
     rlglue.network$connect(host, port)
@@ -38,6 +38,7 @@ force_connection <- function() {
     rlglue.network$putInt(kExperimentConnection)
     rlglue.network$putInt(0)
     rlglue.network$send()
+    #assign("rlglue.network", rlglue.network, .GlobalEnv)
   }
 }
 
@@ -64,35 +65,30 @@ doStandardRecv <- function(state) {
 }
 
 doCallWithNoParams <- function(state) {
-  
+  rlglue.network$clearSendBuffer()
+  rlglue.network$putInt(state)
+  rlglue.network$putInt(0)
+  rlglue.network$send()
 }
 
-# # (int) -> void
-# def doCallWithNoParams(state):
-#   network.clearSendBuffer()
-# network.putInt(state)
-# network.putInt(0)
-# network.send()
-# 
-# #Brian Tanner... need to make this return a string
-# # () -> string
-# def RL_init():
-#   forceConnection()
-# doCallWithNoParams(Network.kRLInit)
-# doStandardRecv(Network.kRLInit)
-# #Brian Tanner added
-# taskSpecResponse = network.getString()
-# return taskSpecResponse
-# 
-# # () -> Observation_action
-# def RL_start():
-#   obsact = None
-# doCallWithNoParams(Network.kRLStart)
-# doStandardRecv(Network.kRLStart)
-# obsact = Observation_action()
-# obsact.o = network.getObservation()
-# obsact.a = network.getAction()
-# return obsact
+RL_init <- function() {
+  forceConnection()
+  doCallWithNoParams(kRLInit)
+  doStandardRecv(kRLInit)
+  taskSpecResponse = rlglue.network$getString()
+  return(taskSpecResponse)
+}
+
+RL_start <- function() {
+  #   obsact = None
+  # doCallWithNoParams(Network.kRLStart)
+  # doStandardRecv(Network.kRLStart)
+  # obsact = Observation_action()
+  # obsact.o = network.getObservation()
+  # obsact.a = network.getAction()
+  # return obsact
+}
+
 # 
 # # () -> Reward_observation_action_terminal
 # def RL_step():

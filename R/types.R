@@ -39,16 +39,13 @@ observation <- function(numInts=NA, numDoubles=NA, numChars=NA) {
   return(atype)
 }
 
-# class Observation_action:
-#   def __init__(self,theObservation=None,theAction=None):
-#   if theObservation != None:
-#   self.o = theObservation
-# else:
-#   self.o = Observation()
-# if theAction != None:
-#   self.a = theAction
-# else:
-#   self.a = Action()
+observation_action <- function(theObservation=NA, theAction=NA) {
+  oa = list()
+  if(is.na(theObservation)) oa$o = observation()
+  if(is.na(theAction)) oa$a = action()
+  return(oa)
+}
+
 # 
 # class Reward_observation_terminal:
 #   def __init__(self,reward=None, theObservation=None, terminal=None):

@@ -18,6 +18,7 @@
 #
 
 # RL-Glue needs to know what type of object is trying to connect.
+
 kExperimentConnection  = 1
 kAgentConnection       = 2
 kEnvironmentConnection = 3
@@ -68,7 +69,7 @@ Network <- R6Class("Network",
                            print(paste("Trying to connect to server."))
                            while(is.na(self$sock)) {
                              (result <- try({
-                               self$sock <- socketConnection(host=host, port=port)
+                               self$sock <- socketConnection(host=host, port=port, open="ab")
                              }))
                              if(all(class(result) == "try-error")) {
                                self$sock <- NA
@@ -87,7 +88,7 @@ Network <- R6Class("Network",
                          },
                          send = function() {
                            if(is.na(self$sock) || !isOpen(self$sock)) self$connect()
-                           write(self$sendBuffer, self$sock)
+                           writeBin(as.raw(self$sendBuffer), self$sock)
                          },
                          recv = function(size) {
                            s = ''
@@ -100,7 +101,7 @@ Network <- R6Class("Network",
                          },
                          clearSendBuffer = function() self$sendBuffer = '',
                          clearRecvBuffer = function() self$recvBuffer = '',
-                         getInt = function() as.integer(self$recvBuffer),
+                         getInt = function() as.integer(unpack('V', self$recvBuffer[1:4])),
                          getDouble = function() as.double(self$recvBuffer),
                          getChar = function() as.character(self$recvBuffer),
                          getAbstractType = function() {
@@ -110,9 +111,9 @@ Network <- R6Class("Network",
                            at$charArray = getChar()
                            return(at)
                          },
-                         putInt = function(value) self$sendBuffer = paste(self$sendBuffer, value),
-                         putDouble = function(value) self$sendBuffer = paste(self$sendBuffer, value),
-                         putChar = function(value) self$sendBuffer = paste(self$sendBuffer, value)
+                         putInt = function(value) self$sendBuffer = paste(self$sendBuffer, value, sep=""),
+                         putDouble = function(value) self$sendBuffer = paste(self$sendBuffer, value, sep=""),
+                         putChar = function(value) self$sendBuffer = paste(self$sendBuffer, value, sep="")
                        )
 )
 

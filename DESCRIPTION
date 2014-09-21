@@ -3,8 +3,8 @@ Type: Package
 Title: RL-Glue
 Version: 0.1
 Date: 2014-09-10
-Author: Shane Conway
+Author: Shane Conway and Joshua Ulrich
 Maintainer: Shane Conway <smc77@columbia.edu>
 Description: Provides an R interface to RL-Glue
-Depends: R6
+Depends: R6, pack
 License: MIT + file LICENSE
