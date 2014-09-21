@@ -1,0 +1,1 @@
+{"name":"Rlglue","tagline":"R package for RL-Glue","body":"rlglue\r\n======\r\n\r\nR package for [RL-Glue](http://glue.rl-community.org/wiki/Main_Page).\r\n\r\n\r\n\r\n```\r\nlibrary(devtools)\r\ninstall_github(\"smc77/rlglue\")\r\n```","google":"","note":"Don't delete this file! It's used internally to help with page regeneration."}
