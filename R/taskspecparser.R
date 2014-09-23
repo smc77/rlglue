@@ -25,143 +25,82 @@
 
 tsp.example <- "VERSION RL-Glue-3.0 PROBLEMTYPE episodic DISCOUNTFACTOR 1 OBSERVATIONS INTS (UNSPEC 1) ACTIONS DOUBLES (NEGINF POSINF) CHARCOUNT 0 REWARDS (UNSPEC UNSPEC) EXTRA Name: Test Problem A"
 
-assign("rlglue.tsp", list(w=c("VERSION","PROBLEMTYPE","DISCOUNTFACTOR", "OBSERVATIONS","ACTIONS","REWARDS","EXTRA"),
-            v=c("INTS","DOUBLES","CHARCOUNT"), 
-            expected_version = "RL-Glue-3.0",
-            valid = TRUE,
-            last_error = ""), envir=.GlobalEnv)
-
-
 TaskSpec <- R6Class("TaskSpec",
                    public = list(
                      w = c("VERSION","PROBLEMTYPE","DISCOUNTFACTOR", "OBSERVATIONS","ACTIONS","REWARDS","EXTRA"), 
                      v=c("INTS","DOUBLES","CHARCOUNT"), 
                      expected_version = "RL-Glue-3.0",
                      valid = TRUE,
-                     last_error = "")
+                     last_error = "",
+                     ts = "",
+                     init = function(ts) {
+                       # Replace white spaces
+                       while(any(grep("  ", ts))) ts <- gsub("  ", " ", ts)
+                       self$ts <- strsplit(ts, " ")[[1]]                       
+                       if(self$expected_version != self$getVersion()){
+                         stop(paste("Expected version does not match:", self$expected_version, "-", self$getVersion()))
+                         self$valid = FALSE
+                       }
+                     },
+                     getValue = function(i=NA, name=NA) {
+                       if(is.na(i) && !is.na(name))
+                         i <- which(w == name)
+                       if(!any(i)) stop(paste("Did not specify getValue properly:", i, name))
+                       if(i > length(w)) stop(paste("There are no values beyond i:", i))
+                       start = which(ts == w[i]) + 1
+                       end = if(length(w) < i + 1) length(ts) else which(ts == w[i + 1]) - 1                       
+                       return(paste(ts[start:end], collapse=" "))
+                     },
+                     Validate = function() {
+                       if(!self$valid) {
+                         print(paste("Warning: task specification appears to be invalid.", last_error))
+                         return(FALSE)
+                       }
+                       return(TRUE)
+                     },
+                     getVersion = function() {
+                       if(!self$Validate()) return("")
+                       return(self$getValue(name="VERSION"))
+                     },
+                     getProblemType = function() {
+                       if(!self$Validate()) return("")
+                       return(self$getValue(name="PROBLEMTYPE"))
+                     },
+                     getDiscountFactor = function() {
+                       if(!self$Validate()) return("")
+                       return(self$getValue(name="DISCOUNTFACTOR"))
+                     },
+                     getReward = function() {
+                       if(!self$Validate()) return("")
+                       return(self$getValue(name="REWARDS"))
+                     },
+                     getExtra = function() {
+                       if(!self$Validate()) return("")
+                       return(self$getValue(name="EXTRA"))
+                     },
+                     CompleteVars = function(str_in) {
+                       if(!self$Validate()) return("")
+                       if(!any(grepl(self$v[1], str_in))) {
+                         str_in = paste(self$v[1], " (0 0 0) ", str_in, sep="")
+                       }
+                       if(!any(grepl(self$v[2], str_in))) {
+                         str_in = paste(str_in, " ", self$v[2], " (0, 0, 0) ", sep="")
+                       }
+                       if(!any(grepl(self$v[3], str_in))) {
+                         str_in = paste(str_in, " ", self$v[3], " 0 ", sep="")
+                       }
+                       return(str_in)
+                     },
+                     getObservations = function() {
+                       if(!self$Validate()) return("")
+                       return(self$CompleteVars(self$getValue(name="OBSERVATIONS")))
+                     },
+                     getActions = function() {
+                       if(!self$Validate()) return("")
+                       return(self$CompleteVars(self$getValue(name="ACTIONS")))
+                     })
 )
-                     
 
-rlglue.tsp <- list(w=c("VERSION","PROBLEMTYPE","DISCOUNTFACTOR", "OBSERVATIONS","ACTIONS","REWARDS","EXTRA"),
-     v=c("INTS","DOUBLES","CHARCOUNT"), 
-     expected_version = "RL-Glue-3.0",
-     valid = TRUE,
-     last_error = "")
-
-#environment(rlglue.tsp) <- as.environment('package:rl.glue')
-
-tsp.init <- function(ts, tsp=NA) {
-  if(!is.na(tsp))
-    orig.var.name <- as.character(match.call()$tsp)
-  tsp$ts <- ts
-  ts2 <- strsplit(ts, " ")[[1]]
-  version.index <- ts2 == "VERSION"
-  problemtype.index <- ts2 == "PROBLEMTYPE"
-  discountfactor.index <- ts2 == "DISCOUNTFACTOR"
-  observations.index <- ts2 == "OBSERVATIONS"
-  actions.index <- ts2 == "ACTIONS"
-  if(tsp$expected_version != ts2[version.index + 1])
-    stop("Task specification is for the wrong RL-Glue version")
-  tsp$version <- ts2[version.index + 1]
-  tsp$valid = FALSE
-  assign(orig.var.name, tsp, parent.frame(1))
-}
-
-# tsp.getVersion() <- function(tsp) {
-#   #   a = len(self.w[0])+1
-#   # return self.ts[a:self.ts.find(" ",a)]
-#   a = nchar(tsp$w[1])
-#   return(tsp$ts[a + 1:])
-# }
-# 
-# 
-# 
-# 
-# def __init__(self,ts):
-#   self.ts = ts
-# if self.expected_version != self.getVersion():
-#   print "Warning: TaskSpec Version is not "+self.expected_version+" but "+self.getVersion()
-# self.valid = False
-# 
-# def getVersion(self):
-#   a = len(self.w[0])+1
-# return self.ts[a:self.ts.find(" ",a)]
-# 
-# def Validate(self):
-#   if not self.valid:
-#   print "Warning: TaskSpec String is invalid: "+self.last_error
-# return False
-# return True
-# 
-# def getValue(self,i,ts,w):
-#   try:
-#   a = ts.index(w[i]) + len(w[i]) + 1
-# except: #ValueError:
-#   #raise AttributeError("Malformed TaskSpec String: could not find the "+w[i]+" keyword")
-#   self.last_error = "could not find the "+w[i]+" keyword"
-# print "Warning: Malformed TaskSpec String: " +self.last_error
-# self.valid = False
-# return ""
-# b=None
-# if (i+1)<len(w):
-#   try:
-#   b = ts.index(w[i+1])-1
-# except: #ValueError:
-#   #raise AttributeError("Malformed TaskSpec String: could not find the "+w[i+1]+" keyword")
-#   self.last_error = "could not find the "+w[i+1]+" keyword"
-# print "Warning: Malformed TaskSpec String: " +self.last_error
-# self.valid = False
-# return ""
-# 
-# return ts[a:b].strip()
-# 
-# def getProblemType(self):
-#   if not self.Validate():
-#   return ""
-# return self.getValue(1,self.ts,self.w)
-# 
-# def getDiscountFactor(self):
-#   if not self.Validate():
-#   return ""
-# return float(self.getValue(2,self.ts,self.w))	
-# 
-# def CompleteVars(self,str_in):
-#   if not self.Validate():
-#   return ""
-# """ forces the vars to have ints doubles and charcount
-# """
-# if self.v[0] not in str_in:
-#   str_in = self.v[0]+" (0 0 0) " + str_in
-# if self.v[2] not in str_in:
-#   str_in= str_in.rstrip()+" "+self.v[2]+" 0 "
-# if self.v[1] not in str_in:
-#   i = str_in.find(self.v[2])
-# str_in= str_in[0:i]+self.v[1]+" (0 0 0) "+str_in[i:]
-# 
-# 
-# return str_in
-# 
-# def getObservations(self):
-#   if not self.Validate():
-#   return ""
-# str_o = self.getValue(3,self.ts,self.w)
-# return self.CompleteVars(str_o)
-# 
-# def getActions(self):
-#   if not self.Validate():
-#   return ""
-# str_a = self.getValue(4,self.ts,self.w)
-# return self.CompleteVars(str_a)
-# 
-# def getReward(self):
-#   if not self.Validate():
-#   return ""
-# return self.getValue(5,self.ts,self.w)
-# 
-# def getExtra(self):
-#   if not self.Validate():
-#   return ""
-# return self.getValue(6,self.ts,self.w)
 # 
 # def isSpecial(self,maxOrMin):
 #   if type(maxOrMin)!=type(""):
@@ -257,3 +196,19 @@ tsp.init <- function(ts, tsp=NA) {
 # str_a = self.getActions()
 # return int(self.getValue(2,str_a,self.v))
 # 
+
+
+test.TaskSpec <- function() {
+  errors <- c()
+  ts <- TaskSpec$new()
+  ts$init(tsp.example)
+  if(ts$getVersion() != "RL-Glue-3.0") errors <- c(errors, "Could not get version.")
+  if(ts$getProblemType() != "episodic") errors <- c(errors, "Could not get problem type.")
+  if(length(errors)) {
+    print(paste("There were errors: ", errors, collapse=";"))
+    return(FALSE)
+  } else {
+    print("Test passed.")
+  }  
+  return(TRUE)
+}
