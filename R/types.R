@@ -17,68 +17,65 @@
 # limitations under the License.
 #
 
-abstract.type <- function(numInts=NA, numDoubles=NA, numChars=NA) {
-  atype <- list(intArray=c(), doubleArray=c(), charArray=c())
-  
-  if(!is.na(numInts)) atype$intArray <- rep(0L, numInts)
-  if(!is.na(numDoubles)) atype$doubleArray <- rep(0, numDoubles)
-  if(!is.na(numChars)) atype$charArray <- rep('', numChars)
-  
-  return(atype)
-}
+RL_Abstract_Type <- R6Class("RL_Abstract_Type",
+                 public=list(
+                   intArray = c(),
+                   doubleArray = c(),
+                   charArray = c(),
+                   initialize = function(numInts=NA, numDoubles=NA, numChars=NA) {
+                     if(!is.na(numInts)) self$intArray <- rep(0L, numInts)
+                     if(!is.na(numDoubles)) self$doubleArray <- rep(0, numDoubles)
+                     if(!is.na(numChars)) self$charArray <- rep('', numChars)
+                   },
+                   sameAs = function(otherAbstractType) {
+                     return(length(self$intArray) == length(otherAbstractType$intArray) && 
+                              length(self$doubleArray) == length(otherAbstractType$doubleArray) && 
+                              length(self$charArray) == length(otherAbstractType$charArray) && 
+                              all(self$intArray == otherAbstractType$intArray) && 
+                              all(self$doubleArray == otherAbstractType$doubleArray) && 
+                              all(self$charArray == otherAbstractType$charArray))
+                   }
+                 ))
 
-action <- function(numInts=NA, numDoubles=NA, numChars=NA) {
-  atype <- abstract.type(numInts=numInts, numDoubles=numDoubles, numChars=numChars)
-  class(atype) <- "action"
-  return(atype)
-}
+Action <- R6Class("Action",
+                  inherit = RL_Abstract_Type)
 
-observation <- function(numInts=NA, numDoubles=NA, numChars=NA) {
-  atype <- abstract.type(numInts=numInts, numDoubles=numDoubles, numChars=numChars)
-  class(atype) <- "observation"
-  return(atype)
-}
+Observation <- R6Class("Observation",
+                  inherit = RL_Abstract_Type)
 
-observation_action <- function(theObservation=NA, theAction=NA) {
-  oa = list()
-  if(is.na(theObservation)) oa$o = observation()
-  if(is.na(theAction)) oa$a = action()
-  return(oa)
-}
+Observation_action <- R6Class("Observation_action",
+                              public = list(
+                                o=Observation$new(),
+                                a=Action$new(),
+                                initialize=function(theObservation=NULL,theAction=NULL) {
+                                  if(!all(is.null(theObservation))) self$o = theObservation
+                                  if(!all(is.null(theAction))) self$a = theAction
+                                })
+)
 
-# 
-# class Reward_observation_terminal:
-#   def __init__(self,reward=None, theObservation=None, terminal=None):
-#   if reward != None:
-#   self.r = reward
-# else:
-#   self.r = 0.0
-# if theObservation != None:
-#   self.o = theObservation
-# else:
-#   self.o = Observation()
-# if terminal != None:
-#   self.terminal = terminal
-# else:
-#   self.terminal = False
-# 
-# class Reward_observation_action_terminal:
-#   def __init__(self,reward=None, theObservation=None, theAction=None, terminal=None):
-#   if reward != None:
-#   self.r = reward
-# else:
-#   self.r = 0.0
-# if theObservation != None:
-#   self.o = theObservation
-# else:
-#   self.o = Observation()
-# if theAction != None:
-#   self.a = theAction
-# else:
-#   self.a = Action()
-# if terminal != None:
-#   self.terminal = terminal
-# else:
-#   self.terminal = False
-# 
-# 
+Reward_observation_terminal <- R6Class("Reward_observation_terminal",
+                              public = list(
+                                r = 0.0,
+                                o=Observation$new(),
+                                terminal=FALSE,
+                                initialize=function(reward=NULL, theObservation=NULL, terminal=NULL) {
+                                  if(!all(is.null(reward))) self$r = reward
+                                  if(!all(is.null(theObservation))) self$o = theObservation
+                                  if(!all(is.null(terminal))) self$terminal = terminal
+                                })
+)
+
+
+Reward_observation_action_terminal <- R6Class("Reward_observation_action_terminal",
+                                       public = list(
+                                         r = 0.0,
+                                         o=Observation$new(),
+                                         a=Action$new(),
+                                         terminal=FALSE,
+                                         initialize=function(reward=NULL, theObservation=NULL, theAction=NULL, terminal=NULL) {
+                                           if(!all(is.null(reward))) self$r = reward
+                                           if(!all(is.null(theObservation))) self$o = theObservation
+                                           if(!all(is.null(theAction))) self$a = theAction
+                                           if(!all(is.null(terminal))) self$terminal = terminal
+                                         })
+)
