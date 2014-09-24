@@ -38,10 +38,22 @@ RL_Abstract_Type <- R6Class("RL_Abstract_Type",
                  ))
 
 Action <- R6Class("Action",
-                  inherit = RL_Abstract_Type)
+                  inherit = RL_Abstract_Type,
+                  public=list(
+                    fromAbstractType = function(AbstractType) {
+                      self$intArray = AbstractType$intArray
+                      self$doubleArray = AbstractType$doubleArray
+                      self$charArray = AbstractType$charArray
+                    }))
 
 Observation <- R6Class("Observation",
-                  inherit = RL_Abstract_Type)
+                  inherit = RL_Abstract_Type,
+                  public=list(
+                    fromAbstractType = function(AbstractType) {
+                      self$intArray = AbstractType$intArray
+                      self$doubleArray = AbstractType$doubleArray
+                      self$charArray = AbstractType$charArray
+                    }))
 
 Observation_action <- R6Class("Observation_action",
                               public = list(

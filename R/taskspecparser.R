@@ -98,47 +98,37 @@ TaskSpec <- R6Class("TaskSpec",
                      getActions = function() {
                        if(!self$Validate()) return("")
                        return(self$CompleteVars(self$getValue(name="ACTIONS")))
+                     },
+                     isSpecial = function(maxOrMin) {
+                       if(!is.character(maxOrMin)) return(FALSE)
+                       if(maxOrMin=="UNSPEC" || maxOrMin=="NEGINF" || maxOrMin=="POSINF") return(TRUE)
+                       return(FALSE)
+                     },
+                     getRange = function(str_input) {
+                       if(!self$Validate()) return("")
+                       result <- try({
+                         str_input = gsub("UNSPEC","'UNSPEC'", str_input)
+                         str_input = gsub("NEGINF","'NEGINF'", str_input)
+                         str_input = gsub("POSINF","'POSINF'", str_input)
+                         str_input = gsub(" ",",", str_input)
+                         r = eval(parse(text=str_input))
+                         if(length(r) == 2) return(r)
+                         out = rep(c(r[2], r[3]), r[1])
+                         return(out)                         
+                       })
+                       if(class(a) == "try-error") {
+                         self$last_error = paste("error ocurred while parsing a Range in", str_input)
+                         self$valid = FALSE
+                         return("")
+                       }
+                     },
+                     getRewardRange = function() {
+                       if(!self$Validate()) return("")
+                       str_reward = self$getReward()
+                       return(self$getRange(str_reward))
                      })
 )
 
-# 
-# def isSpecial(self,maxOrMin):
-#   if type(maxOrMin)!=type(""):
-#   return False
-# if maxOrMin=="UNSPEC" or maxOrMin=="NEGINF" or maxOrMin=="POSINF":
-#   return True;
-# else:
-#   return False;
-# 
-# def getRange(self,str_input):
-#   if not self.Validate():
-#   return ""
-# try:
-#   str_input = str_input.replace("UNSPEC","'UNSPEC'")
-# str_input = str_input.replace("NEGINF","'NEGINF'")
-# str_input = str_input.replace("POSINF","'POSINF'")
-# str_input = str_input.replace(" ",",")
-# r = eval(str_input)
-# if len(r)==2:
-#   return [list(r)]
-# 
-# out = r[0]*([[r[1],r[2]]])
-# return out
-# 
-# except:
-#   self.last_error = "error ocurred while parsing a Range in "+str_input
-# print "Warning: Malformed TaskSpec String: " +self.last_error
-# print sys.exc_info()
-# self.valid = False
-# return ""
-# 
-# 
-# 
-# def getRewardRange(self):
-#   if not self.Validate():
-#   return ""
-# str_reward = self.getReward()
-# return self.getRange(str_reward)
 # 
 # def getVarInfoRange(self,i,ts,w):
 #   self.Validate()

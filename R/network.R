@@ -105,50 +105,53 @@ Network <- R6Class("Network",
                          getDouble = function() as.double(self$recvBuffer),
                          getChar = function() as.character(self$recvBuffer),
                          getAbstractType = function() {
-                           at <- list()
-                           at$intArray = getInt()
-                           at$doubleArray = getDouble()
-                           at$charArray = getChar()
-                           return(at)
+                           numInts = self$getInt()
+                           numDoubles = self$getInt()
+                           numChars = self$getInt()
+                           returnStruct = RL_Abstract_Type$new()
+                           
+                           if(numInts > 0) {
+                             s = substr(self$recvBuffer, 1, numInts*kIntSize)
+                             
+                           }
+                           return(returnStruct)
+                         },
+                         getObservation = function() {
+                           Observation$new()$fromAbstractType(self$getAbstractType())
+                         },
+                         getAction = function() {
+                           Action$new()$fromAbstractType(self$getAbstractType())
                          },
                          putInt = function(value) self$sendBuffer = paste(self$sendBuffer, value, sep=""),
                          putDouble = function(value) self$sendBuffer = paste(self$sendBuffer, value, sep=""),
-                         putChar = function(value) self$sendBuffer = paste(self$sendBuffer, value, sep="")
+                         putString = function(value) self$sendBuffer = paste(self$sendBuffer, value, sep=""),
+                         putAbstractType = function(theItem) {
+                           self$putInt(length(theItem$intArray))
+                           self$putInt(length(theItem$doubleArray))
+                           self$putInt(length(theItem$charArray))
+                           if (length(theItem$intArray) > 0) {
+                             1
+                             #self$sendBuffer.write(struct.pack("!%di" % (len(theItem.intArray)),*(theItem.intArray)))
+                           }
+                           if (length(theItem$doubleArray) > 0) {
+                             1
+                             #self$sendBuffer.write(struct.pack("!%dd" % (len(theItem.doubleArray)),*(theItem.doubleArray)))
+                           }
+                           if (length(theItem$charArray) > 0) {
+                             1
+                             #self$sendBuffer.write(struct.pack("!%dc" % (len(theItem.charArray)),*(theItem.charArray)))                           
+                           }
+                         },
+                         putObservation = function(obs) {
+                           self$putAbstractType(obs)
+                         }, 
+                         putAction = function(action) {
+                           self$putAbstractType(action)
+                         }
                        )
 )
 
 
-
-# def flipSendBuffer(self):
-#   self.clearSendBuffer()
-# 
-# def flipRecvBuffer(self):
-#   self.clearRecvBuffer()
-# 
-# 
-# def getObservation(self):
-#   return Observation.fromAbstractType(self.getAbstractType())
-# 
-# def getAction(self):
-#   return Action.fromAbstractType(self.getAbstractType())
-# 
-# 
-# def putObservation(self,obs):
-#   self.putAbstractType(obs)
-# 
-# def putAction(self,action):
-#   self.putAbstractType(action)
-# 
-# def putAbstractType(self, theItem):
-#   self.putInt(len(theItem.intArray))
-# self.putInt(len(theItem.doubleArray))
-# self.putInt(len(theItem.charArray))
-# if len(theItem.intArray) > 0:
-#   self.sendBuffer.write(struct.pack("!%di" % (len(theItem.intArray)),*(theItem.intArray)))
-# if len(theItem.doubleArray) > 0:
-#   self.sendBuffer.write(struct.pack("!%dd" % (len(theItem.doubleArray)),*(theItem.doubleArray)))
-# if len(theItem.charArray) > 0:
-#   self.sendBuffer.write(struct.pack("!%dc" % (len(theItem.charArray)),*(theItem.charArray)))
 # 
 # def putRewardObservation(self,rewardObservation):
 #   self.putInt(rewardObservation.terminal);
