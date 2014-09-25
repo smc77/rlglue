@@ -63,8 +63,8 @@ kUnknownMessage = "Unknown Message: %s\n"
 Network <- R6Class("Network",
                        public = list(
                           sock = NA, 
-                          recvBuffer = '',
-                          sendBuffer = '', 
+                          recvBuffer = list(),
+                          sendBuffer = list(), 
                           connect = function(host=kLocalHost, port=kDefaultPort, retryTimeout=kRetryTimeout) {
                            print(paste("Trying to connect to server."))
                            while(is.na(self$sock)) {
@@ -88,22 +88,29 @@ Network <- R6Class("Network",
                          },
                          send = function() {
                            if(is.na(self$sock) || !isOpen(self$sock)) self$connect()
-                           writeBin(as.raw(self$sendBuffer), self$sock)
+                           lapply(self$sendBuffer, function(x) writeBin(x, self$sock))
                          },
                          recv = function(size) {
-                           s = ''
                            if(is.na(self$sock) || !isOpen(self$sock)) self$connect()
-                           while(nchar(s) < size) {
-                             x <- readLines(self$sock)
-                             self$recvBuffer <- paste(recvBuffer, x, sep='')
+                           while(length(self$recvBuffer) < size) {
+                             x <- readBin(self$sock, raw(), size=1, endian="big")#readLines(self$sock)
+                             self$recvBuffer <- c(self$recvBuffer, list(x))
                            }
-                           return(nchar(self$recvBuffer))
+                           return(length(self$recvBuffer))
                          },
-                         clearSendBuffer = function() self$sendBuffer = '',
-                         clearRecvBuffer = function() self$recvBuffer = '',
-                         getInt = function() as.integer(unpack('V', self$recvBuffer[1:4])),
-                         getDouble = function() as.double(self$recvBuffer),
-                         getChar = function() as.character(self$recvBuffer),
+                         clearSendBuffer = function() self$sendBuffer = list(),
+                         clearRecvBuffer = function() self$recvBuffer = list(),
+                         getInt = function() {
+                           i <- as.integer(readBin(unlist(self$recvBuffer[1:4]), integer(), endian="big"))
+                           self$recvBuffer <- self$recvBuffer[-c(1:4)]
+                           return(i)
+                         },
+                         getDouble = function() {
+                           d <- as.double(readBin(unlist(self$recvBuffer[1:8]), double(), endian="big"))
+                           self$recvBuffer <- self$recvBuffer[-c(1:8)]
+                           return(d)
+                         },
+                         getString = function() as.character(self$recvBuffer),
                          getAbstractType = function() {
                            numInts = self$getInt()
                            numDoubles = self$getInt()
@@ -122,8 +129,8 @@ Network <- R6Class("Network",
                          getAction = function() {
                            Action$new()$fromAbstractType(self$getAbstractType())
                          },
-                         putInt = function(value) self$sendBuffer = paste(self$sendBuffer, value, sep=""),
-                         putDouble = function(value) self$sendBuffer = paste(self$sendBuffer, value, sep=""),
+                         putInt = function(value) self$sendBuffer <- c(self$sendBuffer, list(writeBin(as.integer(value), con=raw(), size=4L, endian="big"))),
+                         putDouble = function(value) self$sendBuffer <- c(self$sendBuffer, list(writeBin(as.double(value), con=raw(), size=8L, endian="big"))),
                          putString = function(value) self$sendBuffer = paste(self$sendBuffer, value, sep=""),
                          putAbstractType = function(theItem) {
                            self$putInt(length(theItem$intArray))
