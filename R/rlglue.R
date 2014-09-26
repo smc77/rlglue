@@ -18,28 +18,24 @@
 #
 
 forceConnection <- function() {
-  if(is.na(rlglue.network)) {
-    
-    theCodecVersion = packageVersion("rlglue")
-    
-    host = kLocalHost
-    port = kDefaultPort
-    
-    #
-    hostString = Sys.getenv("RLGLUE_HOST")
-    portString = Sys.getenv("RLGLUE_PORT")
-    
-    print(paste("RL-Glue R Experiment Codec Version:", theCodecVersion, "."))
-    print(paste("Connecting to ", host, " on port ", port, "...", sep=""))
-    
-    rlglue.network <<- Network$new()
-    rlglue.network$connect(host, port)
-    rlglue.network$clearSendBuffer()
-    rlglue.network$putInt(kExperimentConnection)
-    rlglue.network$putInt(0)
-    rlglue.network$send()
-    #assign("rlglue.network", rlglue.network, .GlobalEnv)
-  }
+  theCodecVersion = packageVersion("rlglue")
+  
+  host = kLocalHost
+  port = kDefaultPort
+  
+  #
+  hostString = Sys.getenv("RLGLUE_HOST")
+  portString = Sys.getenv("RLGLUE_PORT")
+  
+  print(paste("RL-Glue R Experiment Codec Version:", theCodecVersion, "."))
+  print(paste("Connecting to ", host, " on port ", port, "...", sep=""))
+  
+  rlglue.network <<- Network$new()
+  rlglue.network$connect(host, port)
+  rlglue.network$clearSendBuffer()
+  rlglue.network$putInt(kExperimentConnection)
+  rlglue.network$putInt(0)
+  rlglue.network$send()
 }
 
 doStandardRecv <- function(state) {
@@ -55,8 +51,8 @@ doStandardRecv <- function(state) {
   remainingReceived = rlglue.network$recv(remaining)
   
   # Already read the header, so discard it
-  rlglue.network$getInt()
-  rlglue.network$getInt()
+  #rlglue.network$getInt()
+  #rlglue.network$getInt()
   
   if (glueState != state) {
     stop(paste("Not synched with server. glueState = ", str(glueState), " but should be ", state, "\n"), sep="")
@@ -80,48 +76,49 @@ RL_init <- function() {
 }
 
 RL_start <- function() {
-  #   obsact = None
-  # doCallWithNoParams(Network.kRLStart)
-  # doStandardRecv(Network.kRLStart)
-  # obsact = Observation_action()
-  # obsact.o = network.getObservation()
-  # obsact.a = network.getAction()
-  # return obsact
+  obsact = NA
+  doCallWithNoParams(kRLStart)
+  doStandardRecv(kRLStart)
+  obsact = Observation_action$new()
+  obsact$o = rlglue.network$getObservation()
+  obsact$a = rlglue.network$getAction()
+  return(obsact)
 }
 
-# 
-# # () -> Reward_observation_action_terminal
-# def RL_step():
-#   roat = None
-# doCallWithNoParams(Network.kRLStep)
-# doStandardRecv(Network.kRLStep)
-# roat = Reward_observation_action_terminal()
-# roat.terminal = network.getInt()
-# roat.r = network.getDouble()
-# roat.o = network.getObservation()
-# roat.a = network.getAction()
-# return roat
-# 
-# # () -> void
-# def RL_cleanup():
-#   doCallWithNoParams(Network.kRLCleanup)
-# doStandardRecv(Network.kRLCleanup)
-# 
-# # (string) -> string
-# def RL_agent_message(message):
-#   if message == None:
-#   message=""
-# response = ""
-# forceConnection()
-# network.clearSendBuffer()
-# network.putInt(Network.kRLAgentMessage)
-# #Payload Size
-# network.putInt(len(message) + 4)
-# network.putString(message)
-# network.send()
-# doStandardRecv(Network.kRLAgentMessage)
-# response = network.getString()
-# return response
+RL_step <- function(){
+  roat = None
+  doCallWithNoParams(kRLStep)
+  doStandardRecv(kRLStep)
+  roat = Reward_observation_action_terminal$new()
+  roat$terminal = rlglue.network$getInt()
+  roat$r = rlglue.network$getDouble()
+  roat$o = rlglue.network$getObservation()
+  roat$a = rlglue.network$getAction()
+  return(roat)
+}
+
+RL_cleanup <- function() {
+  doCallWithNoParams(kRLCleanup)
+  doStandardRecv(kRLCleanup)
+}
+
+# (string) -> string
+RL_agent_message <- function(message) {
+  if(is.na(message)) 
+    message = ""
+  response = ""
+  forceConnection()
+  rlglue.network$clearSendBuffer()
+  rlglue.network$putInt(kRLAgentMessage)
+  #Payload Size
+  rlglue.network$putInt(nchar(message) + 4)
+  rlglue.network$putString(message)
+  rlglue.network$send()
+  doStandardRecv(NkRLAgentMessage)
+  response = rlglue.network$getString()
+  return(response)
+}
+
 # 
 # # (string) -> string
 # def RL_env_message(message):

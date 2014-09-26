@@ -106,11 +106,14 @@ Network <- R6Class("Network",
                            return(i)
                          },
                          getDouble = function() {
-                           d <- as.double(readBin(unlist(self$recvBuffer[1:8]), double(), endian="big"))
+                           d <- as.double(readBin(unlist(self$cvBuffer[1:8]), double(), endian="big"))
                            self$recvBuffer <- self$recvBuffer[-c(1:8)]
                            return(d)
                          },
-                         getString = function() as.character(self$recvBuffer),
+                         getString = function() {
+                           size = self$getInt()
+                           readChar(unlist(self$recvBuffer), size)
+                         },
                          getAbstractType = function() {
                            numInts = self$getInt()
                            numDoubles = self$getInt()
@@ -118,8 +121,13 @@ Network <- R6Class("Network",
                            returnStruct = RL_Abstract_Type$new()
                            
                            if(numInts > 0) {
-                             s = substr(self$recvBuffer, 1, numInts*kIntSize)
-                             
+                             returnStruct$intArray = lapply(1:numInts, self$getInt(s))
+                           }
+                           if(numDoubles > 0) {
+                             returnStruct$doubleArray = lapply(1:numDoubles, self$getDouble())
+                           }
+                           if(numChars > 0) {
+                             returnStruct$charArray = lapply(1:numChars, self$getString())
                            }
                            return(returnStruct)
                          },
@@ -131,22 +139,19 @@ Network <- R6Class("Network",
                          },
                          putInt = function(value) self$sendBuffer <- c(self$sendBuffer, list(writeBin(as.integer(value), con=raw(), size=4L, endian="big"))),
                          putDouble = function(value) self$sendBuffer <- c(self$sendBuffer, list(writeBin(as.double(value), con=raw(), size=8L, endian="big"))),
-                         putString = function(value) self$sendBuffer = paste(self$sendBuffer, value, sep=""),
+                         putChar = function(value) self$sendBuffer = c(self$sendBuffer, list(writeBin(as.character(value), con=raw(), size=8L, endian="big"))),
                          putAbstractType = function(theItem) {
                            self$putInt(length(theItem$intArray))
                            self$putInt(length(theItem$doubleArray))
                            self$putInt(length(theItem$charArray))
                            if (length(theItem$intArray) > 0) {
-                             1
-                             #self$sendBuffer.write(struct.pack("!%di" % (len(theItem.intArray)),*(theItem.intArray)))
+                             lapply(theItem$intArray, function(i) self$putInt(i))
                            }
                            if (length(theItem$doubleArray) > 0) {
-                             1
-                             #self$sendBuffer.write(struct.pack("!%dd" % (len(theItem.doubleArray)),*(theItem.doubleArray)))
+                             lapply(theItem$doubleArray, function(d) self$putDouble(d))
                            }
                            if (length(theItem$charArray) > 0) {
-                             1
-                             #self$sendBuffer.write(struct.pack("!%dc" % (len(theItem.charArray)),*(theItem.charArray)))                           
+                             lapply(theItem$charArray, function(c) self$putChar(c))
                            }
                          },
                          putObservation = function(obs) {
@@ -154,17 +159,16 @@ Network <- R6Class("Network",
                          }, 
                          putAction = function(action) {
                            self$putAbstractType(action)
+                         }, 
+                         putRewardObservation = function(rewardObservation) {
+                           self$putInt(rewardObservation$terminal)
+                           self$putDouble(rewardObservation$r)
+                           self$putObservation(rewardObservation$o)
                          }
                        )
 )
 
 
-# 
-# def putRewardObservation(self,rewardObservation):
-#   self.putInt(rewardObservation.terminal);
-# self.putDouble(rewardObservation.r);
-# self.putObservation(rewardObservation.o);
-# 
 # 
 # def sizeOfAbstractType(self, theItem):
 #   size = kIntSize * 3
