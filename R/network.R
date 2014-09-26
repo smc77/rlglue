@@ -164,32 +164,33 @@ Network <- R6Class("Network",
                            self$putInt(rewardObservation$terminal)
                            self$putDouble(rewardObservation$r)
                            self$putObservation(rewardObservation$o)
+                         },
+                         sizeOfAbstractType(theItem) {
+                           size = kIntSize * 3
+                           intSize = 0
+                           doubleSize = 0
+                           charSize = 0
+                           if(!is.na(theItem) {
+                             if(!is.na(theItem$intArray)) {
+                               intSize = kIntSize * length(theItem$intArray)
+                             }
+                             if(!is.na(theItem$doubleArray)) {
+                               doubleSize = kDoubleSize * length(theItem$doubleArray)
+                             }
+                             if(!is.na(theItem$charArray)) {
+                               charSize = kCharSize * length(theItem$charArray)
+                             }
+                           }
+                           return size + intSize + doubleSize + charSize
+                         },
+                         sizeOfAction <- function(action) {
+                           self$sizeOfAbstractType(action)
+                         },
+                         sizeOfObservation <- function(observation) {
+                           self$sizeOfAbstractType(observation)
+                         },
+                         sizeOfRewardObservation <- function(reward_observation) {
+                           return kIntSize + kDoubleSize + self$sizeOfObservation(reward_observation$o)
                          }
                        )
 )
-
-
-# 
-# def sizeOfAbstractType(self, theItem):
-#   size = kIntSize * 3
-# intSize = 0
-# doubleSize = 0
-# charSize = 0
-# if theItem != None:
-#   if theItem.intArray != None:
-#   intSize = kIntSize * len(theItem.intArray)
-# if theItem.doubleArray != None:
-#   doubleSize = kDoubleSize * len(theItem.doubleArray)
-# if theItem.charArray != None:
-#   charSize = kCharSize * len(theItem.charArray)
-# return size + intSize + doubleSize + charSize
-# 
-# 
-# def sizeOfAction(self,action):
-#   return self.sizeOfAbstractType(action)
-# 
-# def sizeOfObservation(self,observation):
-#   return self.sizeOfAbstractType(observation)
-# 
-# def sizeOfRewardObservation(self,reward_observation):
-#   return kIntSize + kDoubleSize + self.sizeOfObservation(reward_observation.o)
