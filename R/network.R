@@ -121,18 +121,20 @@ Network <- R6Class("Network",
                            returnStruct = RL_Abstract_Type$new()
                            
                            if(numInts > 0) {
-                             returnStruct$intArray = lapply(1:numInts, self$getInt(s))
+                             returnStruct$intArray = lapply(1:numInts, function(i) self$getInt())
                            }
                            if(numDoubles > 0) {
-                             returnStruct$doubleArray = lapply(1:numDoubles, self$getDouble())
+                             returnStruct$doubleArray = lapply(1:numDoubles, function(d) self$getDouble())
                            }
                            if(numChars > 0) {
-                             returnStruct$charArray = lapply(1:numChars, self$getString())
+                             returnStruct$charArray = lapply(1:numChars, function(c) self$getString())
                            }
                            return(returnStruct)
                          },
                          getObservation = function() {
-                           Observation$new()$fromAbstractType(self$getAbstractType())
+                           o = Observation$new()
+                           o = o$fromAbstractType(self$getAbstractType())
+                           return(o)
                          },
                          getAction = function() {
                            Action$new()$fromAbstractType(self$getAbstractType())
@@ -165,12 +167,12 @@ Network <- R6Class("Network",
                            self$putDouble(rewardObservation$r)
                            self$putObservation(rewardObservation$o)
                          },
-                         sizeOfAbstractType(theItem) {
+                         sizeOfAbstractType = function(theItem) {
                            size = kIntSize * 3
                            intSize = 0
                            doubleSize = 0
                            charSize = 0
-                           if(!is.na(theItem) {
+                           if(!is.na(theItem)) {
                              if(!is.na(theItem$intArray)) {
                                intSize = kIntSize * length(theItem$intArray)
                              }
@@ -181,16 +183,16 @@ Network <- R6Class("Network",
                                charSize = kCharSize * length(theItem$charArray)
                              }
                            }
-                           return size + intSize + doubleSize + charSize
+                           return(size + intSize + doubleSize + charSize)
                          },
-                         sizeOfAction <- function(action) {
+                         sizeOfAction = function(action) {
                            self$sizeOfAbstractType(action)
                          },
-                         sizeOfObservation <- function(observation) {
+                         sizeOfObservation = function(observation) {
                            self$sizeOfAbstractType(observation)
                          },
-                         sizeOfRewardObservation <- function(reward_observation) {
-                           return kIntSize + kDoubleSize + self$sizeOfObservation(reward_observation$o)
+                         sizeOfRewardObservation = function(reward_observation) {
+                           return(kIntSize + kDoubleSize + self$sizeOfObservation(reward_observation$o))
                          }
                        )
 )

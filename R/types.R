@@ -44,6 +44,7 @@ Action <- R6Class("Action",
                       self$intArray = AbstractType$intArray
                       self$doubleArray = AbstractType$doubleArray
                       self$charArray = AbstractType$charArray
+                      return(self)
                     }))
 
 Observation <- R6Class("Observation",
@@ -53,6 +54,7 @@ Observation <- R6Class("Observation",
                       self$intArray = AbstractType$intArray
                       self$doubleArray = AbstractType$doubleArray
                       self$charArray = AbstractType$charArray
+                      return(self)
                     }))
 
 Observation_action <- R6Class("Observation_action",
