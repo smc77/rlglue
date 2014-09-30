@@ -41,11 +41,14 @@ forceConnection <- function() {
 doStandardRecv <- function(state) {
   rlglue.network$clearRecvBuffer()
   recvSize = rlglue.network$recv(8) - 8
+
+  if(!length(rlglue.network$recvBuffer)) return(FALSE)
   
   glueState = rlglue.network$getInt()
   dataSize = rlglue.network$getInt()
   remaining = dataSize - recvSize
-  
+
+  if(!length(glueState) || !length(dataSize)) return(FALSE) 
   if(remaining < 0) remaining = 0
   
   remainingReceived = rlglue.network$recv(remaining)
@@ -54,10 +57,11 @@ doStandardRecv <- function(state) {
   #rlglue.network$getInt()
   #rlglue.network$getInt()
   
-  if (glueState != state) {
-    stop(paste("Not synched with server. glueState = ", str(glueState), " but should be ", state, "\n"), sep="")
+  if (!length(glueState) || !length(dataSize) || glueState != state) {
+    print(paste("Not synched with server. glueState = ", str(glueState), " but should be ", state, "\n"), sep="")
+    return(FALSE)
   }
-  
+  return(TRUE)
 }
 
 doCallWithNoParams <- function(state) {
@@ -67,18 +71,24 @@ doCallWithNoParams <- function(state) {
   rlglue.network$send()
 }
 
-RL_init <- function() {
+RL_setup <- function(val) {
+  doCallWithNoParams(val)
+  doStandardRecv(val)
+}
+
+RL_init <- function(recurse=TRUE) {
   forceConnection()
-  doCallWithNoParams(kRLInit)
-  doStandardRecv(kRLInit)
+  if(!RL_setup(kRLInit)) 
+    if(!RL_setup(kRLInit)) return("")
+  #doCallWithNoParams(kRLInit)
+  #doStandardRecv(kRLInit)
   taskSpecResponse = rlglue.network$getString()
   return(taskSpecResponse)
 }
 
 RL_start <- function() {
   obsact = NA
-  doCallWithNoParams(kRLStart)
-  doStandardRecv(kRLStart)
+  if(!RL_setup(kRLStart)) RL_setup(kRLStart)
   obsact = Observation_action$new()
   obsact$o = rlglue.network$getObservation()
   obsact$a = rlglue.network$getAction()
@@ -86,9 +96,7 @@ RL_start <- function() {
 }
 
 RL_step <- function(){
-  roat = None
-  doCallWithNoParams(kRLStep)
-  doStandardRecv(kRLStep)
+  if(!RL_setup(kRLStep)) RL_setup(kRLStep)
   roat = Reward_observation_action_terminal$new()
   roat$terminal = rlglue.network$getInt()
   roat$r = rlglue.network$getDouble()
@@ -98,11 +106,9 @@ RL_step <- function(){
 }
 
 RL_cleanup <- function() {
-  doCallWithNoParams(kRLCleanup)
-  doStandardRecv(kRLCleanup)
+  if(!RL_setup(kRLCleanup)) RL_setup(kRLCleanup)
 }
 
-# (string) -> string
 RL_agent_message <- function(message) {
   if(is.na(message)) 
     message = ""
@@ -119,56 +125,50 @@ RL_agent_message <- function(message) {
   return(response)
 }
 
-# 
-# # (string) -> string
-# def RL_env_message(message):
-#   if message == None:
-#   message=""
-# response = ""
-# forceConnection()
-# network.clearSendBuffer()
-# network.putInt(Network.kRLEnvMessage)
-# #Payload Size
-# network.putInt(len(message) + 4)
-# network.putString(message)
-# network.send()
-# doStandardRecv(Network.kRLEnvMessage)
-# response = network.getString()
-# return response
-# 
-# # () -> double
-# def RL_return():
-#   reward = 0.0
-# doCallWithNoParams(Network.kRLReturn)
-# doStandardRecv(Network.kRLReturn)
-# reward = network.getDouble()
-# return reward
-# 
-# # () -> int
-# def RL_num_steps():
-#   numSteps = 0
-# doCallWithNoParams(Network.kRLNumSteps)
-# doStandardRecv(Network.kRLNumSteps)
-# numSteps = network.getInt()
-# return numSteps
-# 
-# # () -> int
-# def RL_num_episodes():
-#   numEpisodes = 0
-# doCallWithNoParams(Network.kRLNumEpisodes)
-# doStandardRecv(Network.kRLNumEpisodes)
-# numEpisodes = network.getInt()
-# return numEpisodes
-# 
-# #Brian Tanner needs to make this return an int
-# # (int) -> int
-# def RL_episode(num_steps):
-#   network.clearSendBuffer()
-# network.putInt(Network.kRLEpisode)
-# network.putInt(Network.kIntSize)
-# network.putInt(num_steps)
-# network.send()
-# doStandardRecv(Network.kRLEpisode)
-# #Brian Tanner added
-# exitStatus = network.getInt()
-# return exitStatus
+RL_env_message <- function(message) {
+  if(is.na(message)) 
+    message = ""
+  response = ""
+  forceConnection()
+  rlglue.network$clearSendBuffer()
+  rlglue.network$putInt(kRLEnvMessage)
+  #Payload Size
+  rlglue.network$putInt(nchar(message) + 4)
+  rlglue.network$putString(message)
+  rlglue.network$send()
+  doStandardRecv(kRLEnvMessage)
+  response = rlglue.network$getString()
+  return(response)
+}
+
+RL_return <- function() {
+  reward = 0.0
+  if(!RL_setup(kRLReturn)) RL_setup(kRLReturn)
+  reward = rlglue.network$getDouble()
+  return(reward)
+}
+
+RL_num_steps <- function() {
+  numSteps = 0
+  if(!RL_setup(kRLNumSteps)) RL_setup(kRLNumSteps)
+  numSteps = rlglue.network$getInt()
+  return(numSteps)
+}
+
+RL_num_episodes <- function() {
+  numEpisodes = 0
+  if(!RL_setup(kRLNumEpisodes)) RL_setup(kRLNumEpisodes)
+  numEpisodes = rlglue.network$getInt()
+  return(numEpisodes)
+}
+
+RL_episode <- function(num_steps) {
+  rlglue.network$clearSendBuffer()
+  rlglue.network$putInt(kRLEpisode)
+  rlglue.network$putInt(kIntSize)
+  rlglue.network$putInt(num_steps)
+  rlglue.network$send()
+  doStandardRecv(kRLEpisode)
+  exitStatus = rlglue.network$getInt()
+  return(exitStatus)
+}

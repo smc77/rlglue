@@ -106,13 +106,15 @@ Network <- R6Class("Network",
                            return(i)
                          },
                          getDouble = function() {
-                           d <- as.double(readBin(unlist(self$cvBuffer[1:8]), double(), endian="big"))
+                           d <- as.double(readBin(unlist(self$recvBuffer[1:8]), double(), endian="big"))
                            self$recvBuffer <- self$recvBuffer[-c(1:8)]
                            return(d)
                          },
                          getString = function() {
                            size = self$getInt()
-                           readChar(unlist(self$recvBuffer), size)
+                           return(readChar(unlist(self$recvBuffer), size))
+                           #self$recvBuffer <- self$recvBuffer[-c(1:size)]
+                           #return(string)
                          },
                          getAbstractType = function() {
                            numInts = self$getInt()
