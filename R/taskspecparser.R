@@ -36,17 +36,22 @@ TaskSpec <- R6Class("TaskSpec",
                      init = function(ts) {
                        # Replace white spaces
                        while(any(grep("  ", ts))) ts <- gsub("  ", " ", ts)
-                       self$ts <- strsplit(ts, " ")[[1]]                       
+                       #self$ts <- strsplit(ts, " ")[[1]]     
+                       self$ts <- ts
                        if(self$expected_version != self$getVersion()){
                          stop(paste("Expected version does not match:", self$expected_version, "-", self$getVersion()))
                          self$valid = FALSE
                        }
                      },
-                     getValue = function(i=NA, name=NA) {
-                       if(is.na(i) && !is.na(name))
+                     getValue = function(i=NA, name=NA, ts=NA, w=NA) {
+                       if(all(is.na(w))) w <- self$w
+                       if(all(is.na(ts))) ts <- self$ts
+                       if(all(is.na(i)) && !all(is.na(name)))
                          i <- which(w == name)
-                       if(!any(i)) stop(paste("Did not specify getValue properly:", i, name))
+                       if(i < 1) stop(paste("Index value i must be >= 1", i))
+                       if(!length(i)) stop(paste("Did not specify getValue properly:", i, name))
                        if(i > length(w)) stop(paste("There are no values beyond i:", i))
+                       ts <- strsplit(ts, " ")[[1]]
                        start = which(ts == w[i]) + 1
                        end = if(length(w) < i + 1) length(ts) else which(ts == w[i + 1]) - 1                       
                        return(paste(ts[start:end], collapse=" "))
@@ -114,8 +119,8 @@ TaskSpec <- R6Class("TaskSpec",
                          str_input = gsub("\\(","c(", str_input)
                          
                          r = eval(parse(text=str_input))
-                         if(length(r) == 2) return(r)
-                         out = rep(c(r[2], r[3]), r[1])
+                         if(length(r) == 2) return(paste("(", r[1], ",", r[2], ")", sep=""))
+                         out = rep(paste("(", r[2], ",", r[3], ")", sep=""), r[1])
                          return(out)                         
                        })
                        if(class(result) == "try-error") {
@@ -135,34 +140,31 @@ TaskSpec <- R6Class("TaskSpec",
 #                        b = ts[w[i+1]]+1
 #                        return(substr(ts, a:b]) 
                        return(self$getValue(name=w[i]))
+                     },
+                     GetVarValue = function(i, str_o) {
+                       if(!self$Validate()) return("")
+                       str_r = self$getValue(i=i, ts=str_o, w=self$v)
+                       str_r = gsub(") \\(",")#\\(", str_r)
+                       # Ok I can parse it but this (there is no space or there is an extra space in ranges)
+                       # should be checked since this means that the taskspec is malformed
+                       str_r = gsub("\\( ","(", str_r)
+                       str_r = gsub(" )",")", str_r)
+                       str_r = gsub(")\\(",")#\\(", str_r)
+                                              
+                       parts = strsplit(str_r, "#")[[1]]
+                       str_r = lapply(parts, function(x) self$getRange(x))
+                       # Need to return a list of vectors
+                       
+                       return(str_r)
+                     },
+                     getIntObservations = function() {
+                       if(!self$Validate()) return("")
+                       return(self$GetVarValue(i=1, str_o=self$getObservations()))
                      }
                    )
 )
 
-# 
-# def GetVarValue(self,i,str_o):
-#   if not self.Validate():
-#   return ""
-# str_r = self.getValue(i,str_o,self.v)
-# str_r = str_r.replace(") (",")#(")
-# # Ok I can parse it but this (there is no space or there is an extra space in ranges)
-# # should be checked since this means that the taskspec is malformed
-# str_r = str_r.replace("( ","(")
-# str_r = str_r.replace(" )",")")
-# str_r = str_r.replace(")(",")#(")
-# 
-# 
-# parts = str_r.split("#")
-# obs=[]
-# for p in parts:
-#   obs.extend(self.getRange(p))
-# return obs
-# 
-# def getIntObservations(self):
-#   if not self.Validate():
-#   return ""
-# return self.GetVarValue(0,self.getObservations())
-# 
+
 # def getDoubleObservations(self):
 #   if not self.Validate():
 #   return ""
@@ -195,6 +197,7 @@ TaskSpec <- R6Class("TaskSpec",
 test.TaskSpec <- function() {
   errors <- c()
   ts <- TaskSpec$new()
+  tsp.example <- "VERSION RL-Glue-3.0 PROBLEMTYPE episodic DISCOUNTFACTOR .7 OBSERVATIONS INTS (NEGINF 1) ( 2 -5 POSINF ) DOUBLES (2 -1.2 0.5 )(-.07 .07) (UNSPEC 3.3) (0 100.5) CHARCOUNT 32 ACTIONS INTS (5 0 4) DOUBLES (-.5 2) (2 7.8 9) (NEGINF UNSPEC) REWARDS (-5.0 5.0) EXTRA some other stuff goes here"
   ts$init(tsp.example)
   if(ts$getVersion() != "RL-Glue-3.0") errors <- c(errors, "Could not get version.")
   if(ts$getProblemType() != "episodic") errors <- c(errors, "Could not get problem type.")
