@@ -111,12 +111,14 @@ TaskSpec <- R6Class("TaskSpec",
                          str_input = gsub("NEGINF","'NEGINF'", str_input)
                          str_input = gsub("POSINF","'POSINF'", str_input)
                          str_input = gsub(" ",",", str_input)
+                         str_input = gsub("\\(","c(", str_input)
+                         
                          r = eval(parse(text=str_input))
                          if(length(r) == 2) return(r)
                          out = rep(c(r[2], r[3]), r[1])
                          return(out)                         
                        })
-                       if(class(a) == "try-error") {
+                       if(class(result) == "try-error") {
                          self$last_error = paste("error ocurred while parsing a Range in", str_input)
                          self$valid = FALSE
                          return("")
@@ -126,15 +128,17 @@ TaskSpec <- R6Class("TaskSpec",
                        if(!self$Validate()) return("")
                        str_reward = self$getReward()
                        return(self$getRange(str_reward))
-                     })
+                     },                     
+                     getVarInfoRange = function(i, ts, w) {
+                       self$Validate()
+#                        a = ts[w[i]]
+#                        b = ts[w[i+1]]+1
+#                        return(substr(ts, a:b]) 
+                       return(self$getValue(name=w[i]))
+                     }
+                   )
 )
 
-# 
-# def getVarInfoRange(self,i,ts,w):
-#   self.Validate()
-# a = ts.index(w[i])
-# b = ts.index(w[i+1])+1
-# return ts[a:b]
 # 
 # def GetVarValue(self,i,str_o):
 #   if not self.Validate():

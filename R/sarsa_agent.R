@@ -17,19 +17,6 @@
 # limitations under the License.
 #
 
-# 
-# import random
-# import sys
-# import copy
-# import pickle
-# from rlglue.agent.Agent import Agent
-# from rlglue.agent import AgentLoader as AgentLoader
-# from rlglue.types import Action
-# from rlglue.types import Observation
-# from rlglue.utils import TaskSpecVRLGLUE3
-# from random import Random
-# 
-
 
 # This is a very simple Sarsa agent for discrete-action, discrete-state
 # environments.  It uses epsilon-greedy exploration.
@@ -46,7 +33,6 @@
 #   different codec (Matlab, Python, Java, C, Lisp should all be fine)
 #   -  Start this agent like:
 #   $> python sample_sarsa_agent.py
-
 
 SarsaAgent <- R6Class("SarsaAgent",
                  inherit=Agent,
@@ -81,7 +67,7 @@ SarsaAgent <- R6Class("SarsaAgent",
                      } else {
                        print(paste("Task Spec could not be parsed:", taskSpecString))
                      }
-                     
+                     #
                      self$lastAction=Action()
                      self$lastObservation=Observation()
                    },
@@ -94,7 +80,16 @@ SarsaAgent <- R6Class("SarsaAgent",
                      #return self$value_function[state].index(max(self.value_function[state]))
                    },
                    agent_start = function(observation=NA) {
-                     return()
+                     #
+                     theState = observation$intArray[0]
+                     thisIntAction=self$egreedy(theState)
+                     returnAction=Action()
+                     returnAction$intArray=c(thisIntAction)
+                     #
+                     self$lastAction=returnAction
+                     self$lastObservation=observation
+                     #
+                     return(returnAction)
                    },
                    agent_step = function(reward=NA, observation=NA) return(),
                    agent_end = function(reward=NA) return(),
